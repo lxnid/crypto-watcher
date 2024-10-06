@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Crypto Chart</title>
+		<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+		<style>
+			#chart {
+				width: 600px;
+				height: 400px;
+			}
+			table {
+				width: 50%;
+				margin: 20px 0;
+				border-collapse: collapse;
+			}
+			table,
+			th,
+			td {
+				border: 1px solid black;
+			}
+			th,
+			td {
+				padding: 10px;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<h2>Crypto TradingView-like Chart</h2>
+		<div id="chart"></div>
+		<h3>Analyzed Data</h3>
+		<table id="analyzedData">
+			<tr>
+				<th>Max Price</th>
+				<th>Min Price</th>
+				<th>Closing Price</th>
+				<th>Trend</th>
+				<th>Average Price</th>
+				<th>Price Change (%)</th>
+				<th>Volume Avg</th>
+			</tr>
+		</table>
+
+		<script>
+			// Initialize chart
+			const chart = LightweightCharts.createChart(
+				document.getElementById("chart"),
+				{
+					width: 600,
+					height: 400,
+				}
+			);
+			const candleSeries = chart.addCandlestickSeries();
+
+			// Fetch historical data
+			fetch("http://localhost:8000/fetch_crypto_data")
+				.then((response) => response.json())
+				.then((data) => {
+					// Convert data to candlestick format
+					const chartData = data.map((item) => ({
+						time: new Date(item.timestamp).getTime() / 1000,
+						open: parseFloat(item.open),
+						high: parseFloat(item.high),
+						low: parseFloat(item.low),
+						close: parseFloat(item.close),
+					}));
+					candleSeries.setData(chartData);
+				});
+
+			// Fetch analyzed data and populate table
+			fetch("http://localhost:8000/analyze_crypto_data")
+				.then((response) => response.json())
+				.then((data) => {
+					const table = document.getElementById("analyzedData");
+					const row = table.insertRow();
+					row.insertCell(0).innerText = data.max_price;
+					row.insertCell(1).innerText = data.min_price;
+					row.insertCell(2).innerText = data.closing_price;
+					row.insertCell(3).innerText = data.trend;
+					row.insertCell(4).innerText = data.avg_price;
+					row.insertCell(5).innerText = data.price_change.toFixed(2);
+					row.insertCell(6).innerText = data.volume_avg.toFixed(2);
+				});
+		</script>
+	</body>
+</html>
