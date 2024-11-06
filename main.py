@@ -1,10 +1,20 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import pandas as pd
 import requests
 from pydantic import BaseModel
 
 app = FastAPI()
+
+# Add CORS middleware to allow requests from localhost:5500 (your frontend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5500"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class AnalysisResult(BaseModel):
@@ -44,12 +54,15 @@ def fetch_data(symbol, interval, start_time, end_time):
             "ignore",
         ],
     )
-    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+
+    # Convert timestamp from milliseconds to a string for JSON serialization
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms").astype(str)
     df["open"] = pd.to_numeric(df["open"], errors="coerce")
     df["high"] = pd.to_numeric(df["high"], errors="coerce")
     df["low"] = pd.to_numeric(df["low"], errors="coerce")
     df["close"] = pd.to_numeric(df["close"], errors="coerce")
     df["volume"] = pd.to_numeric(df["volume"], errors="coerce")
+
     return df
 
 
